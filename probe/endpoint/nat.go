@@ -80,10 +80,10 @@ All of the above can be satisfied by these rules:
 // the NAT table.
 func (n natMapper) applyNAT(rpt report.Report, scope string) {
 	n.flowWalker.walkFlows(func(f conntrack.Conn, _ bool) {
-		replyDstID := endpointNodeID(scope, f.Reply.Dst, f.Reply.DstPort)
-		origSrcID := endpointNodeID(scope, f.Orig.Src, f.Orig.SrcPort)
 
 		if (f.Status & conntrack.IPS_SRC_NAT) != 0 {
+			replyDstID := endpointNodeID(scope, f.Reply.Dst, f.Reply.DstPort)
+			origSrcID := endpointNodeID(scope, f.Orig.Src, f.Orig.SrcPort)
 			if replyDstID != origSrcID {
 				// either add NAT orig source as a copy of NAT reply destination
 				if replyDstNode, ok := rpt.Endpoint.Nodes[replyDstID]; ok {
@@ -102,17 +102,17 @@ func (n natMapper) applyNAT(rpt report.Report, scope string) {
 		}
 
 		if (f.Status & conntrack.IPS_DST_NAT) != 0 {
-			fromID := endpointNodeID(scope, f.Reply.Dst, f.Reply.DstPort)
-			fromNode, ok := rpt.Endpoint.Nodes[fromID]
-			if !ok {
-				return
-			}
-			toID := endpointNodeID(scope, f.Orig.Dst, f.Orig.DstPort)
-
-			// replace destination with reply source
 			replySrcID := endpointNodeID(scope, f.Reply.Src, f.Reply.SrcPort)
-			if replySrcID != toID {
-				fromNode.Adjacency = fromNode.Adjacency.Minus(toID)
+			origDstID := endpointNodeID(scope, f.Orig.Dst, f.Orig.DstPort)
+			if replySrcID != origDstID {
+				fromID := endpointNodeID(scope, f.Reply.Dst, f.Reply.DstPort)
+				fromNode, ok := rpt.Endpoint.Nodes[fromID]
+				if !ok {
+					return
+				}
+
+				// replace destination with reply source
+				fromNode.Adjacency = fromNode.Adjacency.Minus(origDstID)
 				fromNode = fromNode.WithAdjacent(replySrcID)
 				rpt.Endpoint.Nodes[fromID] = fromNode
 
@@ -121,7 +121,7 @@ func (n natMapper) applyNAT(rpt report.Report, scope string) {
 				if !ok {
 					replySrcNode = report.MakeNode(replySrcID)
 				}
-				newNode := replySrcNode.WithID(toID).WithLatests(map[string]string{
+				newNode := replySrcNode.WithID(origDstID).WithLatests(map[string]string{
 					CopyOf: replySrcID,
 				})
 				rpt.Endpoint.AddNode(newNode)
