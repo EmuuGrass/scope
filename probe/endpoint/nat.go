@@ -49,6 +49,8 @@ Incoming from outside the cluster to a NodePort:
   NAT: IPS_SRC_NAT IPS_DST_NAT orig: 37.157.33.76:13488->172.31.2.17:30081, reply: 10.32.0.7:80->10.32.0.1:13488
   We want: 37.157.33.76:13488->10.32.0.7:80
    - replace the source (== NAT reply dst) with the NAT original source
+  To match another probe with the other side of this connection, also want 37.157.33.76:13488->172.31.2.17:30081
+   - add NAT original dst as a copy of nat reply dst
 
 Outgoing from a pod:
   picked up by ebpf as 10.32.0.7:36078->18.221.99.178:443
@@ -72,8 +74,8 @@ host2:
 All of the above can be satisfied by these rules:
   For SRC_NAT either add NAT orig source as a copy of NAT reply destination
     or add NAT reply destination as a copy of NAT original source
-  For DST_NAT replace the destination in adjacencies with the NAT reply source
-    and add nat original destination as a copy of nat reply source
+  For DST_NAT replace NAT original destination in adjacencies with the NAT reply source
+    or add nat original destination as a copy of nat reply source
 */
 
 // applyNAT modifies Nodes in the endpoint topology of a report, based on
@@ -111,20 +113,22 @@ func (n natMapper) applyNAT(rpt report.Report, scope string) {
 					return
 				}
 
-				// replace destination with reply source
-				fromNode.Adjacency = fromNode.Adjacency.Minus(origDstID)
-				fromNode = fromNode.WithAdjacent(replySrcID)
-				rpt.Endpoint.Nodes[fromID] = fromNode
-
-				// add nat original destination as a copy of nat reply source
-				replySrcNode, ok := rpt.Endpoint.Nodes[replySrcID]
-				if !ok {
-					replySrcNode = report.MakeNode(replySrcID)
+				if fromNode.Adjacency.Contains(origDstID) {
+					// replace destination with reply source
+					fromNode.Adjacency = fromNode.Adjacency.Minus(origDstID)
+					fromNode = fromNode.WithAdjacent(replySrcID)
+					rpt.Endpoint.Nodes[fromID] = fromNode
+				} else {
+					// add nat original destination as a copy of nat reply source
+					replySrcNode, ok := rpt.Endpoint.Nodes[replySrcID]
+					if !ok {
+						replySrcNode = report.MakeNode(replySrcID)
+					}
+					newNode := replySrcNode.WithID(origDstID).WithLatests(map[string]string{
+						CopyOf: replySrcID,
+					})
+					rpt.Endpoint.AddNode(newNode)
 				}
-				newNode := replySrcNode.WithID(origDstID).WithLatests(map[string]string{
-					CopyOf: replySrcID,
-				})
-				rpt.Endpoint.AddNode(newNode)
 			}
 
 		}
