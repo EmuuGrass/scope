@@ -38,6 +38,8 @@ func endpointNodeID(scope string, ip net.IP, port uint16) string {
 
 Some examples of connections with NAT:
 
+Here 10.32.0.X are pod addresses; 172.31.X.X are node addresses; 10.10X.X.X are service virtual addresses.
+
 Pod to pod via Kubernetes service
   picked up by ebpf as 10.32.0.16:47600->10.105.173.176:5432 and 10.32.0.6:5432 (??)
   NAT IPS_DST_NAT orig: 10.32.0.16:47600->10.105.173.176:5432, reply: 10.32.0.6:5432->10.32.0.16:47600
@@ -62,13 +64,13 @@ Docker container exposing port to similar on different host
 host1:
   picked up by ebpf as ip-172-31-5-80;172.17.0.2:43042->172.31.2.17:8080
   NAT: IPS_SRC_NAT orig: 172.17.0.2:43042->172.31.2.17:8080, reply: 172.31.2.17:8080-> 172.31.5.80:43042
-  applying standard rule: ip-172-31-5-80;172.17.0.2:43042->172.31.2.17:8080 (i.e. no change)
+  We want: 172.31.5.80:43042->172.31.2.17:8080
+   - can't have a blanket rule to replace NAT original source with NAT reply destination, because that breaks the "Outgoing from a pod" case
   we could add 172.31.5.80:43042 (nat reply destination) as a copy of ip-172-31-5-80;172.17.0.2:43042 (nat orig source)
 host2:
   picked up by ebpf as 172.31.5.80:43042->ip-172-31-2-17;172.17.0.2:80
   NAT: IPS_DST_NAT orig: 172.31.5.80:43042->172.31.2.17:8080, reply: 172.17.0.2:80->172.31.5.80:43042
   Ideally we might want: ip-172-31-5-80;172.17.0.2:43042->ip-172-31-2-17;172.17.0.2:80
-  applying standard rule: 172.31.5.80:43042->ip-172-31-2-17;172.17.0.2:80 (i.e. no change)
   we could add 172.31.2.17:8080 (nat original destination) as a copy of ip-172-31-2-17;172.17.0.2:80 (nat reply source)
 
 All of the above can be satisfied by these rules:
