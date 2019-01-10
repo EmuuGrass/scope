@@ -25,9 +25,7 @@ class NodeDetailsControlButton extends React.Component {
 
   handleClick(ev) {
     ev.preventDefault();
-    const { id, human } = this.props.control;
-    trackAnalyticsEvent('scope.node.control.click', { id, title: human });
-    this.props.dispatch(doControl(this.props.nodeId, this.props.control));
+
   }
 }
 
