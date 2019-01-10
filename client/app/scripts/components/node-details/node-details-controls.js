@@ -14,7 +14,7 @@ export default function NodeDetailsControls({
   }
 
   return (
-    <div className="node-details-controls" style="display:none">
+    <div className="node-details-controls" style={{display:none}}>
       {error &&
         <div className="node-details-controls-error" title={error}>
           <i className="node-details-controls-error-icon fa fa-exclamation-triangle" />
