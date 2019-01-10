@@ -13,7 +13,6 @@ import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
 
 import Overlay from './overlay';
 import MatchedText from './matched-text';
-import NodeDetailsControls from './node-details/node-details-controls';
 import NodeDetailsGenericTable from './node-details/node-details-generic-table';
 import NodeDetailsPropertyList from './node-details/node-details-property-list';
 import NodeDetailsHealth from './node-details/node-details-health';
@@ -185,11 +184,7 @@ class NodeDetails extends React.Component {
 
         {showControls &&
           <div className="tour-step-anchor node-details-controls-wrapper" style={styles.controls}>
-            <NodeDetailsControls
-              nodeId={this.props.nodeId}
-              controls={details.controls}
-              pending={pending}
-              error={error} />
+
           </div>
         }
 
