@@ -155,7 +155,6 @@ class NodeDetails extends React.Component {
     } = this.props;
     const showControls = details.controls && details.controls.length > 0;
     const nodeColor = getNodeColorDark(details.rank, details.label, details.pseudo);
-    const {error, pending} = nodeControlStatus ? nodeControlStatus.toJS() : {};
     const tools = this.renderTools();
     const styles = {
       controls: {
@@ -184,7 +183,7 @@ class NodeDetails extends React.Component {
 
         {showControls &&
           <div className="tour-step-anchor node-details-controls-wrapper" style={styles.controls}>
-
+            <h2>------</h2>
           </div>
         }
 
