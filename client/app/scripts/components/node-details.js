@@ -13,6 +13,7 @@ import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
 
 import Overlay from './overlay';
 import MatchedText from './matched-text';
+import NodeDetailsControls from './node-details/node-details-controls';
 import NodeDetailsGenericTable from './node-details/node-details-generic-table';
 import NodeDetailsPropertyList from './node-details/node-details-property-list';
 import NodeDetailsHealth from './node-details/node-details-health';
@@ -155,6 +156,7 @@ class NodeDetails extends React.Component {
     } = this.props;
     const showControls = details.controls && details.controls.length > 0;
     const nodeColor = getNodeColorDark(details.rank, details.label, details.pseudo);
+    const {error, pending} = nodeControlStatus ? nodeControlStatus.toJS() : {};
     const tools = this.renderTools();
     const styles = {
       controls: {
@@ -183,7 +185,11 @@ class NodeDetails extends React.Component {
 
         {showControls &&
           <div className="tour-step-anchor node-details-controls-wrapper" style={styles.controls}>
-            <h2>------</h2>
+            <NodeDetailsControls
+              nodeId={this.props.nodeId}
+              controls={details.controls}
+              pending={pending}
+              error={error} />
           </div>
         }
 
