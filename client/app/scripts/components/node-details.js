@@ -183,16 +183,6 @@ class NodeDetails extends React.Component {
           </div>
         </div>
 
-        {showControls &&
-          <div className="tour-step-anchor node-details-controls-wrapper" style={styles.controls}>
-            <NodeDetailsControls
-              nodeId={this.props.nodeId}
-              controls={details.controls}
-              pending={pending}
-              error={error} />
-          </div>
-        }
-
         <div className="node-details-content">
           {details.metrics &&
             <div className="node-details-content-section">

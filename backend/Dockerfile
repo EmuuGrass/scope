@@ -17,9 +17,13 @@ RUN go clean -i net && \
    if [ "$arch_val" != "ppc64el" ]; then \
 	go install -race -tags netgo std; \
    fi; \
+   mkdir -p  /go/src/golang.org/x  && \
+   cd /go/src/golang.org/x   && \
+   git clone https://github.com/golang/lint.git  && \
+   git clone https://github.com/golang/tools.git  && \
+
     go get -tags netgo \
 		github.com/fzipp/gocyclo \
-		golang.org/x/lint/golint \
 		github.com/kisielk/errcheck \
 		github.com/fatih/hclfmt \
 		github.com/mjibson/esc \
@@ -29,9 +33,9 @@ RUN go clean -i net && \
 
    # Only install shfmt on amd64, as the version v1.3.0 isn't supported for ppc64le
    # and the later version of shfmt doesn't work with the application well
+COPY shfmt ./
 RUN export arch_val="$(dpkg --print-architecture)"; \
    if [ "$arch_val" = "amd64" ]; then \
-     curl -fsSL -o shfmt https://github.com/mvdan/sh/releases/download/v1.3.0/shfmt_v1.3.0_linux_amd64 && \
      chmod +x shfmt && \
      mv shfmt /usr/bin; \
    fi;
@@ -39,20 +43,10 @@ RUN export arch_val="$(dpkg --print-architecture)"; \
 RUN pip install yapf==0.16.2 flake8==3.3.0 requests==2.19.1
 
 # Install Docker (client only)
-ENV DOCKERVERSION=17.09.1-ce
-RUN export arch_val="$(dpkg --print-architecture)"; \
-    if [ "$arch_val" = "arm64" ]; then \
-        curl -fsSLO https://download.docker.com/linux/static/stable/aarch64/docker-${DOCKERVERSION}.tgz; \
-    elif [ "$arch_val" = "amd64" ]; then \
-        curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz; \
-    elif [ "$arch_val" = "ppc64el" ]; then \
-        curl -fsSLO https://download.docker.com/linux/static/stable/ppc64le/docker-${DOCKERVERSION}.tgz; \
-    else \
-        echo "No Docker client found for architecture $(arch_val)." && \
-        exit 1; \
-    fi; \
+ENV DOCKERVERSION=17.03.2-ce
+RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz && \
     tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker && \
-    rm docker-${DOCKERVERSION}.tgz;
+    rm docker-${DOCKERVERSION}.tgz
 
 COPY build.sh /
 ENTRYPOINT ["/build.sh"]
